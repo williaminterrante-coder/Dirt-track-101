@@ -1,0 +1,118 @@
+<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1,viewport-fit=cover'><title>Dirt Track 101</title><style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#101214;color:#f4f4f4}.app{max-width:560px;margin:auto;min-height:100vh;padding:18px}.brand{font-size:28px;font-weight:900;letter-spacing:.5px}.tag{color:#bbb;margin:3px 0 18px}.card{background:#1b1e21;border:1px solid #30343a;border-radius:16px;padding:15px;margin:12px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{font-size:12px;color:#aaa;font-weight:700}select,input,textarea{width:100%;margin-top:5px;background:#111315;color:white;border:1px solid #3a3f45;border-radius:10px;padding:12px;font-size:16px}textarea{min-height:70px}.big{width:100%;border:0;border-radius:14px;padding:17px;font-weight:900;font-size:20px;background:#f3f3f3;color:#111;margin:12px 0}.result{border-left:5px solid #ddd}.kicker{font-size:12px;color:#aaa;font-weight:800;text-transform:uppercase}.change{font-size:24px;font-weight:900;margin:7px 0}.why{line-height:1.45}.source{font-size:12px;color:#aaa;margin-top:10px}.feedback{display:flex;gap:8px}.feedback button{flex:1;padding:12px;border-radius:10px;border:1px solid #444;background:#24282d;color:#fff;font-weight:800}.baseline summary{cursor:pointer;font-weight:800}.small{font-size:13px;color:#bbb}.warn{background:#2a2117;border-color:#5a4328}.footer{text-align:center;color:#777;font-size:12px;padding:20px 0}h3{margin:0 0 10px}table{width:100%;border-collapse:collapse;font-size:13px}td{padding:5px;border-bottom:1px solid #30343a}td:first-child{color:#aaa}
+</style></head><body><div class='app'><div class='brand'>DIRT TRACK 101</div><div class='tag'>The better your notes, the faster you will be. Plain and simple.</div>
+<div class='card'><h3>Race Night</h3><div class='grid'><div><label>CHASSIS</label><select id='chassis'><option>Bicknell</option><option>DKM</option><option>Hig Fab</option><option>Teo</option><option disabled>Troyer — Needs Verification</option><option>Other</option></select></div><div><label>ENGINE</label><select id='engine'><option>602 Crate</option><option>358 Spec</option><option>Big Block</option></select></div><div><label>SESSION</label><select id='session'><option>Hot Laps</option><option>Heat</option><option>Consolation</option><option>Feature</option></select></div><div><label>TRACK</label><select id='track'><option>Heavy / Tacky</option><option>Transition</option><option>Slick</option><option>Rubbered Up</option></select></div><div><label>WHERE?</label><select id='where'><option>Entry</option><option>Center</option><option>Exit</option></select></div><div><label>HANDLING</label><select id='handling'><option>Tight</option><option>Neutral</option><option>Loose</option></select></div><div><label>THROTTLE</label><select id='throttle'><option>Off Throttle</option><option>Maintenance Throttle</option><option>Throttle On</option><option>Changes With Throttle</option></select></div><div><label>FORWARD BITE</label><select id='bite'><option>Good</option><option>Fair</option><option>Poor</option></select></div><div><label>SEVERITY</label><select id='severity'><option>Mild</option><option>Moderate</option><option>Severe</option></select></div><div><label>MODE</label><select id='mode'><option>One Change at a Time</option><option>Aggressive Package</option></select></div></div><label>DRIVER NOTE</label><textarea id='note' placeholder='Example: loose in, good center, no forward bite off...'></textarea></div>
+<button class='big' onclick='recommend()'>WHAT DO I CHANGE?</button>
+<div id='out'></div>
+<div class='card baseline'><details><summary>Current Day-One Library</summary><div id='base' class='small'></div></details></div>
+<div class='card warn'><div class='kicker'>Safety / sanity check</div><div class='small'>If the symptom is unusual, sudden, contradictory, or severe, inspect for bind, bottoming, damage, alignment, tire or travel issues before chasing setup.</div></div>
+<div class='footer'>Prototype v0.3 • Bicknell / DKM / Hig Fab / Teo • Troyer pending verification</div></div>
+<script>
+const baselines={
+'Bicknell':[['LF frame height','5 1/4 in'],['RF frame height','5 1/4 in'],['LR frame height','6 1/2 in'],['RR frame height','6 1/2 in'],['LF spring','225#'],['RF spring','150–175# (engine dependent)'],['LR/RR coil starting point','200# general'],['Torsion baseline','LR 950 / RR 925, rollers rear holes']],
+'DKM':[['Framework','Bicknell-derived starting framework'],['Status','Keep DKM identity; validate deviations per car']],
+'Hig Fab':[['Front Panhard','Bottom'],['Rear Panhard','3 up out / 3 up inside'],['Heights','LF 5 5/8, RF 5 3/8, LR 7, RR 6 3/4'],['Springs','LF 225, RF 150; LR 100 16in; RR 175 14in'],['Wedge','40 LR to start'],['Rear %','65% if possible'],['Left %','53.8%'],['Rear square','LR 9 3/4 / RR 9 3/4 to dots'],['Rear center','12 5/8 center rear cover to RR subframe'],['Caster','RF 11.5°'],['Toe','1/4 in out'],['Rear stagger','7 in'],['Wheels','LF 10/4, RF 12/5, LR 13/3, RR 14/3']],
+'Teo':[['Status','Baseline guide captured; current-family applicability user-confirmed for basic 2026 setup'],['Branches','Engine, chassis/year, coil/torsion, Panhard/radius-rod configuration'],['Track logic','Keep heavy/medium and slick setup branches separate']]
+};
+function table(rows){return '<table>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+'</table>'}
+function renderBase(){let h='';for(const [k,v] of Object.entries(baselines))h+='<h3 style="margin-top:16px">'+k+'</h3>'+table(v);document.getElementById('base').innerHTML=h}renderBase();
+function recommend(){
+const c=chassis.value,w=where.value,h=handling.value,t=track.value,b=bite.value,thr=throttle.value,modeV=mode.value,noteV=note.value.toLowerCase();
+let change='',why='',src='',confidence='',actionable=true, protect='';
+const aggressive=modeV==='Aggressive Package';
+
+// Read plain-English notes as a cross-check. Dropdowns remain primary, but notes can clarify
+// that other phases of the corner are acceptable and should be protected.
+const noteLooseEntry=/loose.{0,18}(entry|getting in|in\b)|(entry|getting in).{0,18}loose/.test(noteV);
+const noteTightCenter=/(tight|won.t rotate|would not rotate|push).{0,25}(center|middle)|(center|middle).{0,25}(tight|push|won.t rotate|would not rotate)/.test(noteV);
+const noteDriveOK=/(drive off|forward bite).{0,18}(ok|okay|acceptable|good)|(ok|okay|acceptable|good).{0,18}(drive off|forward bite)/.test(noteV);
+const noteCenterOK=/(center|middle).{0,18}(ok|okay|good|acceptable)|(ok|okay|good|acceptable).{0,18}(center|middle)/.test(noteV);
+if(noteCenterOK) protect+=' Protect the good center balance.';
+if(noteDriveOK) protect+=' Protect the acceptable drive off.';
+
+// Bicknell: use manufacturer-backed directional logic first, then exact values only where captured.
+if(c==='Bicknell' && (h==='Loose' || noteLooseEntry) && w==='Entry'){
+  if(aggressive){
+    change='<div>1) <b>Stabilize entry with the shock package:</b> add LF rebound and/or RF compression in the smallest adjustment your installed shocks allow.</div><div style="margin-top:8px">2) <b>Do not stack a rear-geometry change yet</b> if center and drive off are already acceptable.</div><div style="margin-top:8px">3) Rubbered-up feature: verify tire pressures/stagger are still on your saved feature baseline before chasing chassis.</div>';
+    why='The primary problem is severe loose entry. The note says center and drive off are acceptable, so the package targets entry stability while deliberately protecting the rest of the corner.'+protect+' Exact clicks/valving cannot be stated until the car profile contains the shock brand, series and current valving.';
+  } else {
+    change='<b>First change:</b> add LF rebound <i>or</i> RF compression — one adjustment, smallest available step.';
+    why='This targets loose entry without intentionally changing the rear geometry that is currently giving acceptable center and drive off.'+protect+' Exact amount depends on the installed shock package.';
+  }
+  src='Bicknell manufacturer shock-tuning direction + current car symptom'; confidence='Manufacturer-backed direction • exact shock amount requires car profile';
+}
+else if(c==='Bicknell' && h==='Tight' && (w==='Center'||w==='Entry') && aggressive){
+  change='<div>1) LR rear-end lead: <b>move the left rear ahead 3/8 in</b></div><div style="margin-top:8px">2) Rear stagger: for a Transition-type surface, <b>verify 6–7 in</b>; correct it into that range if outside it.</div>';
+  why='The captured Bicknell setup guidance identifies LR lead as a tight-car tuning option and provides a medium-track rear-stagger range. Poor forward bite remains logged; do not invent an additional bite adjustment until its relationship to this exact car is validated.';
+  src='Bicknell manufacturer setup guide'; confidence='Manufacturer Verified';
+}
+else if(c==='Bicknell' && h==='Tight' && (w==='Center'||w==='Entry')){
+  change='LR rear-end lead: <b>move the left rear ahead 3/8 in</b>';
+  why='Use the captured Bicknell tight-car correction first, then log Better / Same / Worse before stacking another adjustment.';
+  src='Bicknell manufacturer setup guide'; confidence='Manufacturer Verified';
+}
+else if(c==='Bicknell' && h==='Loose' && w==='Exit'){
+  change=aggressive?'<div>1) <b>Reduce the loose-off tendency with the shock package</b> in the smallest available step.</div><div style="margin-top:8px">2) Verify rear stagger and tire pressures against the saved baseline before adding a geometry change.</div>':'<b>First change:</b> use the smallest shock adjustment that adds rear grip/controls weight transfer on throttle.';
+  why='Exit loose is treated differently from entry loose. Dirt Track 101 protects entry/center and starts with a reversible damping change; exact corner/click requires the installed shock package.';
+  src='General Modified tuning principle — exact package mapping pending'; confidence='General Principle • conservative fallback';
+}
+else if(c==='Bicknell' && t==='Slick'){
+  change='Shock direction: <b>free chassis movement for slick conditions</b> — exact click/valving change requires your shock package.';
+  why='Captured Bicknell guidance calls for reduced left-side rebound and reduced right-side compression on dry slick surfaces. Exact amounts depend on installed shocks.';
+  src='Bicknell manufacturer shock-tuning guidance'; confidence='Manufacturer Verified principle';
+}
+else if(c==='Hig Fab' && h==='Tight' && (w==='Entry'||w==='Center')){
+  change='RF spring: consider <b>125# with the specified purple rubber</b>';
+  why='Jerry’s Hig Fab baseline explicitly identifies this option to help the car turn easier. Verify the matching spring/rubber package first.';
+  src='Hig Fab — direct builder-supplied basic setup'; confidence='Builder-specific starting point';
+}
+else if(c==='Hig Fab' && h==='Loose' && w==='Entry'){
+  change=aggressive?'<div>1) <b>Return to Jerry’s baseline first</b> for rear Panhard, rear square, wheel offsets and shock locations.</div><div style="margin-top:8px">2) Make the smallest reversible shock adjustment available to calm entry; do not use the RR 13-inch wheel side-grip option as an entry fix without validation.</div>':'<b>First change:</b> verify the car is on the Hig Fab baseline, then make one small shock change to calm entry.';
+  why='The supplied Hig Fab information gives a strong baseline but does not give a specific loose-entry correction. This fallback keeps the racer moving without pretending an unverified geometry change is builder guidance.';
+  src='Hig Fab builder baseline + conservative general principle'; confidence='Baseline Verified • adjustment direction provisional';
+}
+else if(c==='Hig Fab' && b==='Poor' && w==='Exit'){
+  change='<b>First check:</b> verify the car is on Jerry’s Hig Fab baseline; if side grip is also lacking, the supplied baseline allows the RR on a 13-inch wheel as the documented side-grip option.';
+  why='The builder specifically identifies the RR wheel option for side grip. Dirt Track 101 will not mislabel it as a guaranteed forward-bite fix.';
+  src='Hig Fab — direct builder-supplied basic setup'; confidence='Builder Verified option • symptom match moderate';
+}
+else if(c==='DKM'){
+  // DKM uses the Bicknell framework, so give a usable inherited fallback rather than a dead end.
+  if(h==='Tight' && (w==='Center'||w==='Entry')){
+    change='Bicknell-derived starting point: <b>LR ahead 3/8 in</b>, then record the result on this DKM.';
+    why='Your DKM workflow uses the Bicknell setup sheet. Dirt Track 101 labels this as inherited guidance until this exact DKM proves it.';
+  } else if(h==='Loose' && w==='Entry'){
+    change='<b>First change:</b> use the smallest shock adjustment that calms entry; preserve rear geometry if center/exit are acceptable.';
+    why='This uses the Bicknell-derived framework as a conservative starting direction while keeping DKM history separate.';
+  } else {
+    change='<b>First move:</b> return the car to its saved DKM/Bicknell-derived baseline, then make one reversible shock or load adjustment aimed at the reported corner phase.';
+    why='DKM remains its own car identity, but the setup framework is Bicknell-derived. The result should be logged so this car’s history can replace generic guidance.';
+  }
+  src='DKM practice + Bicknell-derived framework'; confidence='Inherited starting point — learn from this car';
+}
+else if(c==='Teo'){
+  if(h==='Loose' && w==='Entry'){
+    change='<b>First move:</b> verify the car is on the correct Teo year/configuration baseline, then make the smallest reversible shock change to calm entry.';
+    why='The captured Teo guide is configuration-sensitive. Dirt Track 101 will give a usable conservative move while protecting year-specific geometry until the handling-change chart is mapped.';
+  } else if(h==='Tight' && w==='Center'){
+    change='<b>First move:</b> verify ride height, Panhard and shock-extension measurements against the correct Teo baseline; then use one small reversible adjustment to free center.';
+    why='Teo’s baseline depends on chassis year and suspension configuration, so geometry should not be changed blindly.';
+  } else {
+    change='<b>First move:</b> verify the correct Teo baseline for this car, then make one reversible adjustment targeted only at the reported phase of the corner.';
+    why='This keeps the racer moving while the exact Teo symptom-to-change matrix is being validated.';
+  }
+  src='Teo baseline material + conservative fallback'; confidence='Teo baseline verified • exact symptom rule provisional';
+}
+else{
+  // Racer-facing universal fallback. Never expose a development-gap dead end for a normal complaint.
+  const target=w.toLowerCase();
+  change=`<b>First move:</b> verify the saved baseline, then make one small, reversible adjustment aimed at ${target} ${h.toLowerCase()} — start with the shock package before changing multiple geometry points.`;
+  why='There is not yet a chassis-specific exact-value rule for this combination. Dirt Track 101 is using a conservative fallback instead of inventing a precise number. Log the result so this car can build its own evidence.';
+  src='General setup principle / validation fallback'; confidence='LOWER CONFIDENCE — exact chassis rule pending';
+}
+
+let feedback=`<div class="feedback" style="margin-top:14px"><button onclick="this.innerText='✓ BETTER'">BETTER</button><button onclick="this.innerText='✓ SAME'">SAME</button><button onclick="this.innerText='✓ WORSE'">WORSE</button></div>`;
+document.getElementById('out').innerHTML=`<div class="card result"><div class="kicker">${aggressive?'AGGRESSIVE PACKAGE':'FIRST CHANGE TO TRY'}</div><div class="change">${change}</div><div class="why">${why}</div><div class="source">${confidence} • ${src}<br>Condition: ${c} / ${engine.value} / ${session.value} / ${t} / ${w} ${h} / ${thr} / bite ${b}</div>${feedback}</div>`;
+}
+
+</script></body></html>
